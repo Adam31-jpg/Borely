@@ -1,0 +1,167 @@
+@import "@borecore/config/themes.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        background-color: #050507;
+        background-image: radial-gradient(ellipse 100% 70% at 50% 0%,
+                #0D0D12 0%,
+                #07070A 45%,
+                #030304 100%);
+        background-attachment: fixed;
+        min-height: 100%;
+    }
+
+    body {
+        margin: 0;
+        background: transparent;
+        color: rgb(var(--text-primary));
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    /* Scrollbar ultra-fine — cohérente avec l'esthétique mono */
+    ::-webkit-scrollbar {
+        width: 3px;
+        height: 3px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.10);
+        border-radius: 0px;
+        /* Brutaliste — pas de bords ronds */
+    }
+}
+
+@layer utilities {
+
+    /* ──────────────────────────────────────────────────────
+   * Grain Overlay — Texture de Bruit
+   *
+   * Technique GPU-stable pour longues listes :
+   *   position: fixed  → le grain reste IMMOBILE pendant le scroll
+   *                      Il est dans son propre composite layer —
+   *                      la liste défile en-dessous sans recomposition.
+   *   z-index: 1        → au-dessus fond, dessous tout le contenu
+   *   pointer-events: none → n'intercepte pas les clics
+   *   will-change: transform → promotion GPU dès le premier paint
+   *
+   * Le SVG feTurbulence est généré inline pour éviter une requête HTTP.
+   * Opacité 0.032 — discret mais perceptible sur fond très sombre.
+   * ────────────────────────────────────────────────────── */
+    .grain-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        will-change: transform;
+        opacity: 0.032;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        background-repeat: repeat;
+        background-size: 200px 200px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .grain-overlay {
+            opacity: 0;
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────
+   * Glassmorphism 2.0 — GPU Optimisé
+   * ────────────────────────────────────────────────────── */
+    .glass {
+        isolation: isolate;
+        will-change: transform;
+        background: rgba(255, 255, 255, 0.02);
+        border: 0.5px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px) saturate(1.4);
+        -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        position: relative;
+    }
+
+    /* Reflet lumineux — ligne de 0.5px en haut du panneau */
+    .glass::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 10%;
+        right: 10%;
+        height: 0.5px;
+        background: linear-gradient(90deg,
+                transparent,
+                rgba(255, 255, 255, 0.12),
+                transparent);
+        pointer-events: none;
+    }
+
+    @supports not (backdrop-filter: blur(1px)) {
+        .glass {
+            background: rgba(10, 10, 14, 0.95);
+            backdrop-filter: none;
+        }
+    }
+
+    /* ──────────────────────────────────────────────────────
+   * Cartes Expéditeurs — Double bordure ultra-fine
+   *
+   * Technique : border 0.5px + outline transparent décalé
+   * Crée l'illusion d'une double bordure avec profondeur.
+   * ────────────────────────────────────────────────────── */
+    .sender-card {
+        border: 0.5px solid rgba(255, 255, 255, 0.07);
+        outline: 0.5px solid rgba(255, 255, 255, 0.03);
+        outline-offset: 2px;
+        transition: border-color 0.2s, box-shadow 0.2s, outline-color 0.2s;
+    }
+
+    .sender-card:hover {
+        border-color: rgba(255, 255, 255, 0.14);
+        outline-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .sender-card.selected {
+        border-color: rgba(var(--accent), 0.35);
+        outline-color: rgba(var(--accent), 0.12);
+    }
+
+    /* ──────────────────────────────────────────────────────
+   * Ombres "Dures" — Style brutaliste
+   * Offset fixe, zéro blur — contraire des ombres douces.
+   * ────────────────────────────────────────────────────── */
+    .shadow-sharp {
+        box-shadow: 3px 3px 0px rgba(255, 255, 255, 0.04);
+    }
+
+    .shadow-sharp-accent {
+        box-shadow: 3px 3px 0px rgb(var(--accent) / 0.12);
+    }
+
+    /* ──────────────────────────────────────────────────────
+   * Tap target — accessibilité mobile
+   * ────────────────────────────────────────────────────── */
+    .tap-target {
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Safe area iOS */
+    .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+}

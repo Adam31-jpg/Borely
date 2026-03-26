@@ -1,0 +1,9 @@
+{
+    "extends": "@borecore/config/tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist"
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
+}

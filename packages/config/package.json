@@ -1,0 +1,15 @@
+{
+    "name": "@borecore/config",
+    "version": "0.0.0",
+    "private": true,
+    "exports": {
+        "./tailwind": "./tailwind.config.ts",
+        "./themes.css": "./themes.css",
+        "./tsconfig.json": "./tsconfig.json",
+        "./tsconfig.nextjs.json": "./tsconfig.nextjs.json"
+    },
+    "devDependencies": {
+        "tailwindcss": "^3.4.16",
+        "typescript": "^5.7.0"
+    }
+}

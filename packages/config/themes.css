@@ -1,0 +1,93 @@
+/*
+ * Borecore Design System 2.0
+ *
+ * Stratégie couleurs :
+ *   :root           → mode sombre par défaut + accent Hub (Indigo)
+ *   [data-theme=light] → surcharge structurelle
+ *   [data-app=xxx]  → surcharge accent par micro-app
+ *
+ * Glassmorphism :
+ *   rgba(255,255,255,0.03) + blur(16px) + bordure rgba(255,255,255,0.08)
+ *   will-change: transform + isolation: isolate pour GPU promotion
+ */
+
+/* ─── Mode Sombre (Par Défaut) ─── */
+:root {
+  /* Fond radial (appliqué sur body via globals.css) */
+  --radial-center: #0B0B0F;
+  --radial-edge: #000000;
+
+  /* Surfaces structurelles */
+  --bg-primary: 0 0 0;
+  --bg-card: 255 255 255 / 0.03;
+  --bg-elevated: 255 255 255 / 0.06;
+
+  /* Textes */
+  --text-primary: 240 240 248;
+  --text-muted: 120 120 145;
+
+  /* Bordures */
+  --border: 255 255 255 / 0.08;
+  --border-strong: 255 255 255 / 0.14;
+
+  /* Glassmorphism */
+  --glass-bg: 255 255 255 / 0.03;
+  --glass-border: 255 255 255 / 0.08;
+  --glass-blur: blur(16px) saturate(1.5);
+
+  /* Accent Hub — Indigo */
+  --accent: 99 102 241;
+  --accent-hover: 79 82 221;
+  --accent-subtle: 99 102 241 / 0.12;
+
+  /* Ombres */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 48px rgba(99, 102, 241, 0.18);
+
+  /* Effet lumière (reflet sur le haut des cartes) */
+  --shine: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.00) 50%);
+}
+
+/* ─── Mode Clair ─── */
+[data-theme="light"] {
+  --bg-primary: 248 248 252;
+  --bg-card: 0 0 0 / 0.03;
+  --bg-elevated: 0 0 0 / 0.04;
+
+  --text-primary: 12 12 18;
+  --text-muted: 100 100 120;
+
+  --border: 0 0 0 / 0.07;
+  --border-strong: 0 0 0 / 0.12;
+
+  --glass-bg: 255 255 255 / 0.70;
+  --glass-border: 0 0 0 / 0.07;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.10);
+  --shadow-glow: 0 0 48px rgba(99, 102, 241, 0.10);
+
+  --shine: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(255, 255, 255, 0.0) 50%);
+}
+
+/* ─── Accents par Micro-App ─── */
+[data-app="mail"] {
+  --accent: 14 165 233;
+  --accent-hover: 2 132 199;
+  --accent-subtle: 14 165 233 / 0.12;
+  --shadow-glow: 0 0 48px rgba(14, 165, 233, 0.20);
+}
+
+[data-app="finance"] {
+  --accent: 34 197 94;
+  --accent-hover: 22 163 74;
+  --accent-subtle: 34 197 94 / 0.12;
+  --shadow-glow: 0 0 48px rgba(34, 197, 94, 0.20);
+}
