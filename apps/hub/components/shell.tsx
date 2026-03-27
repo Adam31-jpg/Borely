@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Store,
@@ -12,6 +13,8 @@ import {
     Moon,
     PanelLeftClose,
     PanelLeft,
+    LogOut,
+    LogIn,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -94,6 +97,144 @@ function NavItem({
     );
 }
 
+function UserBadge({ collapsed }: { collapsed: boolean }) {
+    const { data: session, status } = useSession();
+
+    if (status === "loading") return null;
+
+    if (!session) {
+        return (
+            <Link
+                href="/login"
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: collapsed ? "8px 0" : "8px 12px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    color: "rgba(255,255,255,0.30)",
+                    textDecoration: "none",
+                    transition: "color 0.15s ease",
+                }}
+            >
+                <LogIn style={{ width: 15, height: 15, flexShrink: 0 }} />
+                {!collapsed && (
+                    <span style={{
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 11,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                    }}>
+                        Connexion
+                    </span>
+                )}
+            </Link>
+        );
+    }
+
+    const initials = (session.user?.name ?? session.user?.email ?? "?")
+        .split(" ")
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase();
+
+    return (
+        <div style={{ width: "100%" }}>
+            {/* Avatar + nom */}
+            <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: collapsed ? "8px 0" : "8px 12px",
+                justifyContent: collapsed ? "center" : "flex-start",
+                marginBottom: 4,
+            }}>
+                {/* Avatar initiales */}
+                <div style={{
+                    flexShrink: 0,
+                    width: 26,
+                    height: 26,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(14,165,233,0.15)",
+                    border: "0.5px solid rgba(14,165,233,0.30)",
+                    clipPath: "polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%)",
+                    fontFamily: "var(--font-syne, sans-serif)",
+                    fontWeight: 800,
+                    fontSize: 10,
+                    letterSpacing: "0.04em",
+                    color: "rgb(14,165,233)",
+                }}>
+                    {initials}
+                </div>
+
+                {!collapsed && (
+                    <div style={{ overflow: "hidden", flex: 1 }}>
+                        <div style={{
+                            fontFamily: "var(--font-syne, sans-serif)",
+                            fontWeight: 700,
+                            fontSize: 11,
+                            letterSpacing: "-0.02em",
+                            color: "rgba(255,255,255,0.75)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}>
+                            {session.user?.name ?? "Utilisateur"}
+                        </div>
+                        <div style={{
+                            fontFamily: "var(--font-geist-mono, monospace)",
+                            fontSize: 9,
+                            letterSpacing: "0.04em",
+                            color: "rgba(255,255,255,0.25)",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}>
+                            {session.user?.email}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Bouton déconnexion */}
+            <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                title="Se déconnecter"
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    width: "100%",
+                    padding: collapsed ? "6px 0" : "6px 12px",
+                    justifyContent: collapsed ? "center" : "flex-start",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "rgba(255,255,255,0.20)",
+                    transition: "color 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(239,68,68,0.70)")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(255,255,255,0.20)")}
+            >
+                <LogOut style={{ width: 13, height: 13, flexShrink: 0 }} />
+                {!collapsed && (
+                    <span style={{
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 10,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                    }}>
+                        Déconnexion
+                    </span>
+                )}
+            </button>
+        </div>
+    );
+}
+
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
     const pathname = usePathname();
 
@@ -150,20 +291,29 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
 
             {/* Pied */}
             <div
-                className="flex flex-col items-center gap-3 px-3 py-5"
+                className="flex flex-col gap-1 px-3 py-4"
                 style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
             >
-                <ThemeToggle />
-                <button
-                    onClick={onToggle}
-                    className="tap-target text-white/25 hover:text-white/60 transition-colors"
-                    aria-label={collapsed ? "Étendre" : "Réduire"}
-                >
-                    {collapsed
-                        ? <PanelLeft className="h-4 w-4" />
-                        : <PanelLeftClose className="h-4 w-4" />
-                    }
-                </button>
+                {/* Session utilisateur */}
+                <UserBadge collapsed={collapsed} />
+
+                {/* Séparateur */}
+                <div style={{ height: "0.5px", background: "rgba(255,255,255,0.05)", margin: "4px 0" }} />
+
+                {/* Thème + collapse */}
+                <div className="flex items-center justify-between px-1">
+                    <ThemeToggle />
+                    <button
+                        onClick={onToggle}
+                        className="tap-target text-white/25 hover:text-white/60 transition-colors"
+                        aria-label={collapsed ? "Étendre" : "Réduire"}
+                    >
+                        {collapsed
+                            ? <PanelLeft className="h-4 w-4" />
+                            : <PanelLeftClose className="h-4 w-4" />
+                        }
+                    </button>
+                </div>
             </div>
         </motion.aside>
     );

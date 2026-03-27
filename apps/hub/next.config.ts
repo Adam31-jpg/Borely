@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
      * au lieu de les attendre pré-compilés. Requis pour les monorepos pnpm
      * avec import direct depuis les sources TypeScript.
      */
-    transpilePackages: ["@borecore/ui", "@borecore/core", "@borecore/app-mail"],
+    transpilePackages: ["@borecore/ui", "@borecore/core", "@borecore/app-mail", "@borecore/auth", "@borecore/database"],
 
     /**
      * Webpack — fallback pour `next build` et `next dev` sans --turbopack.

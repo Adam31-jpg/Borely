@@ -10,8 +10,16 @@
     "scripts": {
         "lint": "tsc --noEmit"
     },
+    "dependencies": {
+        "@auth/drizzle-adapter": "^1.7.4",
+        "@borecore/database": "workspace:*",
+        "bcryptjs": "^2.4.3",
+        "drizzle-orm": "^0.38.0",
+        "next-auth": "5.0.0-beta.30"
+    },
     "devDependencies": {
         "@borecore/config": "workspace:*",
+        "@types/bcryptjs": "^2.4.6",
         "typescript": "^5.7.0"
     }
 }

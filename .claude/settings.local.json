@@ -6,7 +6,22 @@
       "Bash(pnpm install:*)",
       "Bash(pnpm turbo:*)",
       "Bash(find /c/Users/adamh/Documents/Projects/Borely -maxdepth 3 -not -path */node_modules/* -not -path */.next/* -not -path */.turbo/* -not -path */dist/* -type d)",
-      "Bash(find /c/Users/adamh/Documents/Projects/Borely -name .env* -not -path */node_modules/*)"
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -name .env* -not -path */node_modules/*)",
+      "Bash(ls \"C:\\\\Users\\\\adamh\\\\Documents\\\\Projects\\\\Borely\\\\packages\\\\auth\\\\src\"\" 2>/dev/null || echo \"DIR_NOT_FOUND \")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-db@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/borely?sslmode=require\" pnpm generate)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-db@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/borely?sslmode=require\" pnpm migrate)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres\" pnpm migrate)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm migrate)",
+      "Bash(pnpm db:push)",
+      "Bash(node -e \":*)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm -name index.js -path */pg/lib/index.js)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely/packages/database/node_modules -name index.js -path */postgres/src/index.js)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -name package.json -path */postgres/package.json -not -path */node_modules/*/node_modules/*)",
+      "Bash(node -e \"const p = require\\(''/c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm/postgres@3.4.8/node_modules/postgres/cjs''\\); console.log\\(typeof p\\);\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm push)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" printf '\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\ny\\\\n')",
+      "Bash(pnpm push:*)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm generate)"
     ]
   }
 }

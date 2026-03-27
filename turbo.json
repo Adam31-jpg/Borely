@@ -1,5 +1,18 @@
 {
     "$schema": "https://turbo.build/schema.json",
+    "globalEnv": [
+        "DATABASE_URL",
+        "AUTH_SECRET",
+        "AUTH_URL",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "AWS_REGION",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_KMS_KEY_ID",
+        "CREEM_API_KEY",
+        "CREEM_WEBHOOK_SECRET"
+    ],
     "tasks": {
         "build": {
             "dependsOn": [
