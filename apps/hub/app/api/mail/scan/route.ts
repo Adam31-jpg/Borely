@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { createProvider } from "@borecore/app-mail/providers/factory";
 
 /**
@@ -9,15 +10,19 @@ import { createProvider } from "@borecore/app-mail/providers/factory";
  * Corps attendu :
  *   { accountId: string, provider: "gmail" | "outlook", limit?: number }
  *
- * En production :
- *   1. Récupère le token depuis la DB via accountId (décrypté KMS)
- *   2. Instancie le bon provider
- *   3. Appelle fetchPromotions() avec le token
+ * Flux de production :
+ *   1. Récupère l'accessToken depuis la session NextAuth (stocké en JWT)
+ *   2. Instancie le bon provider via la factory
+ *   3. Appelle fetchPromotions() avec le token déchiffré
  *
- * V1 : Retourne les données simulées du GmailProvider
+ * Fallback dev : si pas de token (env non configuré), retourne les données mock.
  */
 export async function POST(req: NextRequest): Promise<NextResponse> {
     try {
+        // Récupération du token depuis la session NextAuth
+        const session = await auth();
+        const accessToken = (session as { accessToken?: string } | null)?.accessToken;
+
         const body = await req.json() as {
             accountId: string;
             provider?: "gmail" | "outlook";
@@ -38,6 +43,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const senders = await mailProvider.fetchPromotions({
             accountId,
             limit,
+            accessToken,
         });
 
         return NextResponse.json({

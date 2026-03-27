@@ -28,6 +28,8 @@ export interface ScanOptions {
     limit: number;
     /** ID du compte (pour le multi-compte) */
     accountId: string;
+    /** Access token OAuth décrypté (injecté par la route API) */
+    accessToken?: string;
 }
 
 /** Résultat d'un désabonnement */
@@ -66,7 +68,9 @@ export interface IMailProvider {
      * 2. Crée un filtre pour supprimer les futurs mails
      */
     unsubscribe(
-        senderId: string,
-        accountId: string
+        senderEmail: string,
+        accountId: string,
+        accessToken?: string,
+        unsubscribeLink?: string,
     ): Promise<UnsubscribeResult>;
 }

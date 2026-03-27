@@ -128,7 +128,7 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
                             exit={{ opacity: 0, width: 0 }}
                             className="font-display font-bold tracking-brutal text-white text-[15px] whitespace-nowrap overflow-hidden uppercase"
                         >
-                            Borecore
+                            Borely
                         </motion.span>
                     )}
                 </AnimatePresence>

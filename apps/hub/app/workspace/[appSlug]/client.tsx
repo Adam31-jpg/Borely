@@ -1,52 +1,114 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useSession } from "next-auth/react";
 import { AppContextProvider } from "@borecore/core";
+import type { ComponentType } from "react";
 
 /**
- * Skeleton affiché pendant le chargement du chunk de la micro-app.
+ * Skeleton affiché pendant le chargement du chunk.
  */
 function AppLoadingSkeleton() {
     return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+        <div
+            style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: "60vh",
+                gap: 16,
+                padding: "40px 24px",
+            }}
+        >
+            {/* Indicateur de chargement brutaliste */}
             <div
-                className="w-10 h-10 rounded-2xl animate-pulse"
-                style={{ background: "rgba(255,255,255,0.06)" }}
+                style={{
+                    width: 40,
+                    height: 40,
+                    background: "rgba(255,255,255,0.04)",
+                    border: "0.5px solid rgba(255,255,255,0.08)",
+                    clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)",
+                    animation: "skeleton-pulse 1.4s ease-in-out infinite",
+                }}
             />
             <div
-                className="w-32 h-2 rounded-full animate-pulse"
-                style={{ background: "rgba(255,255,255,0.04)" }}
+                style={{
+                    width: 120,
+                    height: 2,
+                    background: "rgba(255,255,255,0.06)",
+                    animation: "skeleton-pulse 1.4s ease-in-out 0.2s infinite",
+                }}
             />
+            <span
+                style={{
+                    fontFamily: "var(--font-geist-mono, monospace)",
+                    fontSize: 10,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.15)",
+                }}
+            >
+                Chargement...
+            </span>
         </div>
     );
 }
 
 /**
- * Registre d'import dynamiques des micro-apps.
- * ssr: false → évite que zustand soit résolu côté serveur.
- *
- * Pour ajouter une nouvelle micro-app :
- *   "slug": dynamic(() => import("@borecore/app-xxx").then(m => m.default), { ssr: false })
+ * Import dynamique typé pour BoreBox avec props de session.
+ * ssr: false → empêche Zustand d'être résolu côté serveur.
  */
-const APP_COMPONENTS: Record<string, React.ComponentType> = {
-    mail: dynamic(
-        () => import("@borecore/app-mail").then((m) => m.default),
-        {
-            loading: () => <AppLoadingSkeleton />,
-            ssr: false,
-        }
+const MailApp = dynamic(
+    () => import("@borecore/app-mail").then(
+        (m) => m.default as ComponentType<{ userEmail?: string; userName?: string }>
     ),
-};
+    {
+        loading: () => <AppLoadingSkeleton />,
+        ssr: false,
+    }
+);
+
+/** Registre pour les futures micro-apps sans props spécifiques */
+const GENERIC_APP_COMPONENTS: Record<string, ComponentType> = {};
 
 export function WorkspaceClient({ appSlug }: { appSlug: string }) {
-    const AppComponent = APP_COMPONENTS[appSlug];
+    const { data: session } = useSession();
+    const userEmail = session?.user?.email ?? undefined;
+    const userName = session?.user?.name ?? undefined;
 
-    if (!AppComponent) {
+    /* ── Mail (BoreBox) — injecte la session réelle ── */
+    if (appSlug === "mail") {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10">
+            <AppContextProvider appSlug="mail">
+                <MailApp userEmail={userEmail} userName={userName} />
+            </AppContextProvider>
+        );
+    }
+
+    /* ── Autres micro-apps ── */
+    const GenericApp = GENERIC_APP_COMPONENTS[appSlug];
+
+    if (!GenericApp) {
+        return (
+            <div
+                style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "60vh",
+                    textAlign: "center",
+                    padding: 40,
+                }}
+            >
                 <p
-                    className="text-[13px] font-mono"
-                    style={{ color: "rgba(255,255,255,0.40)" }}
+                    style={{
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 13,
+                        letterSpacing: "0.04em",
+                        color: "rgba(255,255,255,0.35)",
+                    }}
                 >
                     Application &quot;{appSlug}&quot; non disponible.
                 </p>
@@ -56,7 +118,7 @@ export function WorkspaceClient({ appSlug }: { appSlug: string }) {
 
     return (
         <AppContextProvider appSlug={appSlug}>
-            <AppComponent />
+            <GenericApp />
         </AppContextProvider>
     );
 }

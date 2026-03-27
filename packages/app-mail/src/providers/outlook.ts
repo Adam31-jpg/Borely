@@ -44,8 +44,10 @@ export class OutlookProvider implements IMailProvider {
     }
 
     async unsubscribe(
-        _senderId: string,
-        _accountId: string
+        _senderEmail: string,
+        _accountId: string,
+        _accessToken?: string,
+        _unsubscribeLink?: string,
     ): Promise<UnsubscribeResult> {
         // TODO V2 : Créer une règle via POST /me/mailFolders/inbox/messageRules
         throw new Error(

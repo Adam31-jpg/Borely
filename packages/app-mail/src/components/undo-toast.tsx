@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Undo2, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { boreboxConfig } from "../config";
 
 const t = boreboxConfig.texts;
 
 interface UndoToastProps {
-    /** Nombre d'expéditeurs en cours de nettoyage */
     count: number;
-    /** Timestamp de début du countdown */
     startedAt: number;
-    /** Callback d'annulation */
     onUndo: () => void;
 }
 
@@ -24,74 +21,191 @@ export function UndoToast({ count, startedAt, onUndo }: UndoToastProps) {
             const elapsed = Date.now() - startedAt;
             const left = Math.max(0, boreboxConfig.undoDelayMs - elapsed);
             setRemaining(left);
-
             if (left <= 0) {
                 clearInterval(interval);
                 setIsDone(true);
             }
         }, 50);
-
         return () => clearInterval(interval);
     }, [startedAt]);
 
     const progress = 1 - remaining / boreboxConfig.undoDelayMs;
     const secondsLeft = Math.ceil(remaining / 1000);
 
+    /* ── Succès ── */
     if (isDone) {
         return (
             <div
-                className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50
-                   flex items-center gap-3 px-6 py-4 rounded-2xl
-                   glass shadow-lg animate-slide-in-bottom"
+                style={{
+                    position: "fixed",
+                    bottom: "clamp(72px, 10vh, 32px)",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    zIndex: 50,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "14px 24px",
+                    background: "rgba(0,0,0,0.85)",
+                    border: "0.5px solid rgba(34,197,94,0.30)",
+                    borderLeft: "2px solid rgb(34,197,94)",
+                    backdropFilter: "blur(16px)",
+                    WebkitBackdropFilter: "blur(16px)",
+                    boxShadow: "4px 4px 0 rgba(34,197,94,0.08)",
+                    animation: "slide-in-bottom 0.3s cubic-bezier(0.16,1,0.3,1) both",
+                    whiteSpace: "nowrap",
+                }}
             >
-                <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
-                <span className="text-[14px] font-medium text-content-primary">
+                <CheckCircle2
+                    style={{ width: 16, height: 16, color: "rgb(34,197,94)", flexShrink: 0 }}
+                />
+                <span
+                    style={{
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 12,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "rgba(255,255,255,0.75)",
+                    }}
+                >
                     {t.cleaningSuccess}
                 </span>
             </div>
         );
     }
 
+    /* ── Countdown ── */
     return (
         <div
-            className="fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-50
-                 w-[90%] max-w-md animate-slide-in-bottom"
+            style={{
+                position: "fixed",
+                bottom: "clamp(72px, 10vh, 32px)",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 50,
+                width: "min(90vw, 480px)",
+                animation: "slide-in-bottom 0.3s cubic-bezier(0.16,1,0.3,1) both",
+            }}
         >
-            <div className="glass rounded-2xl shadow-lg overflow-hidden">
-                {/* Barre de progression */}
-                <div className="h-1 bg-surface-elevated">
+            {/* Barre de progression — hair line au dessus */}
+            <div
+                style={{
+                    height: 2,
+                    background: "rgba(255,255,255,0.06)",
+                    overflow: "hidden",
+                }}
+            >
+                <div
+                    style={{
+                        height: "100%",
+                        width: `${progress * 100}%`,
+                        background: "rgb(var(--accent))",
+                        boxShadow: "0 0 8px rgb(var(--accent) / 0.60)",
+                        transition: "width 0.1s linear",
+                    }}
+                />
+            </div>
+
+            {/* Corps */}
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 16,
+                    padding: "14px 20px",
+                    background: "rgba(5,5,7,0.92)",
+                    border: "0.5px solid rgba(255,255,255,0.08)",
+                    borderTop: "none",
+                    borderLeft: "2px solid rgb(var(--accent) / 0.60)",
+                    backdropFilter: "blur(20px) saturate(1.2)",
+                    WebkitBackdropFilter: "blur(20px) saturate(1.2)",
+                    boxShadow: "4px 4px 0 rgba(0,0,0,0.40)",
+                }}
+            >
+                {/* Countdown numérique */}
+                <div
+                    style={{
+                        fontFamily: "var(--font-syne, sans-serif)",
+                        fontWeight: 800,
+                        fontSize: 28,
+                        letterSpacing: "-0.05em",
+                        lineHeight: 1,
+                        color: "rgb(var(--accent))",
+                        flexShrink: 0,
+                        minWidth: 24,
+                        textAlign: "center",
+                    }}
+                >
+                    {secondsLeft}
+                </div>
+
+                {/* Séparateur */}
+                <div
+                    style={{
+                        width: "0.5px",
+                        alignSelf: "stretch",
+                        background: "rgba(255,255,255,0.08)",
+                        flexShrink: 0,
+                    }}
+                />
+
+                {/* Texte */}
+                <div style={{ flex: 1, minWidth: 0 }}>
                     <div
-                        className="h-full bg-accent transition-all duration-100 ease-linear"
-                        style={{ width: `${progress * 100}%` }}
-                    />
-                </div>
-
-                {/* Contenu */}
-                <div className="flex items-center justify-between gap-4 px-5 py-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent-subtle text-accent flex-shrink-0">
-                            <Undo2 className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                            <p className="text-[13px] font-semibold text-content-primary truncate">
-                                {count} abonnement{count > 1 ? "s" : ""} nettoyé{count > 1 ? "s" : ""}
-                            </p>
-                            <p className="text-[11px] text-content-muted">
-                                {t.undoCountdown} {secondsLeft}s
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        onClick={onUndo}
-                        className="px-4 py-2 rounded-xl bg-surface-elevated text-[13px]
-                       font-semibold text-content-primary
-                       hover:bg-accent hover:text-white
-                       transition-all duration-200 flex-shrink-0"
+                        style={{
+                            fontFamily: "var(--font-syne, sans-serif)",
+                            fontWeight: 700,
+                            fontSize: 13,
+                            letterSpacing: "-0.02em",
+                            color: "rgba(255,255,255,0.80)",
+                            marginBottom: 2,
+                        }}
                     >
-                        {t.undoButton}
-                    </button>
+                        {count} abonnement{count > 1 ? "s" : ""} nettoyé{count > 1 ? "s" : ""}
+                    </div>
+                    <div
+                        style={{
+                            fontFamily: "var(--font-geist-mono, monospace)",
+                            fontSize: 10,
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            color: "rgba(255,255,255,0.25)",
+                        }}
+                    >
+                        {t.undoCountdown} {secondsLeft}s
+                    </div>
                 </div>
+
+                {/* Bouton Annuler */}
+                <button
+                    onClick={onUndo}
+                    style={{
+                        padding: "9px 16px",
+                        fontFamily: "var(--font-syne, sans-serif)",
+                        fontWeight: 700,
+                        fontSize: 11,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "rgb(var(--accent))",
+                        background: "transparent",
+                        border: "0.5px solid rgb(var(--accent) / 0.40)",
+                        borderRadius: 0,
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                        flexShrink: 0,
+                        whiteSpace: "nowrap",
+                    }}
+                    onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "rgb(var(--accent))";
+                        (e.currentTarget as HTMLButtonElement).style.color = "#000";
+                    }}
+                    onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+                        (e.currentTarget as HTMLButtonElement).style.color = "rgb(var(--accent))";
+                    }}
+                >
+                    {t.undoButton}
+                </button>
             </div>
         </div>
     );

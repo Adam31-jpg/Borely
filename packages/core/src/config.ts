@@ -17,13 +17,13 @@ import type { LucideIcon } from "lucide-react";
  * Méta-données globales du site.
  */
 export const siteConfig = {
-    name: "Borecore",
+    name: "Borely",
     tagline: "Les tâches ennuyeuses, terminées.",
     description:
         "Des micro-apps qui automatisent ce que vous détestez faire. Rapides, chirurgicales, magnifiquement conçues.",
-    url: "https://borecore.app",
+    url: "https://borely.app",
     locale: "fr-FR",
-    creator: "Borecore",
+    creator: "Borely",
 } as const;
 
 /**

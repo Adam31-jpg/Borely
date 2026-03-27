@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -type d -not -path */node_modules/* -not -path */.next/* -not -path */.git/*)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -maxdepth 3 -name drizzle.config.* -o -name .env*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm turbo:*)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -maxdepth 3 -not -path */node_modules/* -not -path */.next/* -not -path */.turbo/* -not -path */dist/* -type d)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely -name .env* -not -path */node_modules/*)"
+    ]
+  }
+}

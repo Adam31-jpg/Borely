@@ -1,5 +1,7 @@
+"use client";
+
 import * as React from "react";
-import { cn } from "./utils";
+import { useState } from "react";
 
 export interface AppCardProps {
     slug: string;
@@ -10,9 +12,18 @@ export interface AppCardProps {
     icon: React.ReactNode;
     accentColor?: string;
     purchased?: boolean;
+    index?: number;
     className?: string;
 }
 
+/**
+ * AppCard — Industrial Luxury
+ *
+ * Layout horizontal : icône brutaliste | nom/desc | catégorie | prix + CTA
+ * Hard shadow décalé en couleur accent.
+ * Bordure supérieure accent pour identifier l'app.
+ * Animation staggerée via CSS (index * 50ms).
+ */
 export function AppCard({
     slug,
     name,
@@ -20,80 +31,211 @@ export function AppCard({
     category,
     price,
     icon,
+    accentColor = "#0EA5E9",
     purchased = false,
-    className,
+    index = 0,
 }: AppCardProps) {
+    const [hovered, setHovered] = useState(false);
     const href = purchased ? `/workspace/${slug}` : `/store/${slug}`;
-    const ctaLabel = purchased ? "Ouvrir" : "Voir le produit";
+    const ctaLabel = purchased ? "Ouvrir →" : "Découvrir →";
+
+    // Parse accent color en RGB pour les effets
+    const parseRgb = (hex: string): string => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `${r},${g},${b}`;
+    };
+    const rgb = parseRgb(accentColor);
 
     return (
         <a
             href={href}
-            className={cn(
-                "group relative flex flex-col gap-5 p-6 rounded-3xl",
-                "bg-surface-card border border-border/50",
-                "hover:border-accent/20 hover:shadow-lg hover:shadow-glow",
-                "transition-all duration-smooth ease-out",
-                "no-underline",
-                className
-            )}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+                display: "block",
+                textDecoration: "none",
+                position: "relative",
+                animation: `slide-up-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 50}ms both`,
+                // Hard shadow — accent couleur décalée
+                boxShadow: hovered
+                    ? `-2px -2px 0 rgba(${rgb}, 0.50)`
+                    : `4px 4px 0 rgba(${rgb}, 0.20)`,
+                // Bordure : accent au hover
+                border: `0.5px solid ${hovered ? `rgba(${rgb}, 0.50)` : "rgba(255,255,255,0.08)"}`,
+                background: hovered ? `rgba(${rgb}, 0.04)` : "rgba(255,255,255,0.02)",
+                transition: "box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease, transform 0.15s ease",
+                transform: hovered ? "translate(-1px, -1px)" : "none",
+                // Ligne accent en haut (1px)
+                borderTop: `1px solid rgba(${rgb}, ${hovered ? "0.70" : "0.30"})`,
+                overflow: "hidden",
+            }}
         >
             {/* Badge acheté */}
             {purchased && (
                 <div
-                    className="absolute top-4 right-4 px-2.5 py-1 rounded-xl
-                      bg-accent/10 text-accent text-[11px] font-semibold tracking-wide"
+                    style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        padding: "2px 8px",
+                        background: `rgba(${rgb}, 0.15)`,
+                        border: `0.5px solid rgba(${rgb}, 0.30)`,
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: accentColor,
+                    }}
                 >
                     Obtenu
                 </div>
             )}
 
-            {/* Icône + Catégorie */}
-            <div className="flex items-start justify-between">
-                <div
-                    className="flex items-center justify-center w-14 h-14 rounded-2xl
-                      bg-accent-subtle text-accent
-                      group-hover:shadow-glow transition-shadow duration-smooth"
-                    data-app={slug}
-                >
-                    {icon}
-                </div>
-                {!purchased && (
-                    <span
-                        className="text-[11px] font-medium text-content-muted
-                       bg-surface-elevated px-3 py-1.5 rounded-xl"
+            <div
+                style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 24,
+                    padding: "24px 28px",
+                }}
+            >
+                {/* ── Icône brutaliste (coin coupé) ── */}
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                    {/* Glow derrière l'icône */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: -4,
+                            background: `rgba(${rgb}, 0.15)`,
+                            filter: "blur(12px)",
+                            transition: "opacity 0.2s",
+                            opacity: hovered ? 1 : 0.5,
+                        }}
+                    />
+                    <div
+                        style={{
+                            position: "relative",
+                            width: 52,
+                            height: 52,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            background: `rgba(${rgb}, 0.12)`,
+                            border: `0.5px solid rgba(${rgb}, 0.25)`,
+                            // Coin coupé en haut à droite — signature brutaliste
+                            clipPath: "polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)",
+                            color: accentColor,
+                        }}
                     >
-                        {category}
-                    </span>
-                )}
-            </div>
+                        {icon}
+                    </div>
+                </div>
 
-            {/* Contenu */}
-            <div className="flex-1 space-y-1.5">
-                <h3
-                    className="text-[15px] font-semibold tracking-tight text-content-primary
-                     group-hover:text-accent transition-colors duration-smooth"
-                >
-                    {name}
-                </h3>
-                <p className="text-[13px] text-content-muted leading-relaxed line-clamp-2">
-                    {description}
-                </p>
-            </div>
+                {/* ── Nom + Description ── */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                        style={{
+                            fontFamily: "var(--font-syne, sans-serif)",
+                            fontWeight: 700,
+                            fontSize: 18,
+                            letterSpacing: "-0.04em",
+                            color: hovered ? accentColor : "rgba(255,255,255,0.92)",
+                            lineHeight: 1.1,
+                            marginBottom: 4,
+                            transition: "color 0.2s",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                        }}
+                    >
+                        {name}
+                    </div>
+                    <div
+                        style={{
+                            fontFamily: "var(--font-geist-mono, monospace)",
+                            fontSize: 12,
+                            color: "rgba(255,255,255,0.35)",
+                            lineHeight: 1.5,
+                            overflow: "hidden",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 1,
+                            WebkitBoxOrient: "vertical",
+                        }}
+                    >
+                        {description}
+                    </div>
+                </div>
 
-            {/* Prix + CTA */}
-            <div className="flex items-center justify-between pt-3 border-t border-border/40">
-                <span className="text-[14px] font-semibold text-content-primary tracking-tight">
-                    {price}
-                </span>
-                <span
-                    className="text-[12px] text-accent font-medium
-                     opacity-0 group-hover:opacity-100
-                     translate-x-1.5 group-hover:translate-x-0
-                     transition-all duration-smooth"
+                {/* ── Catégorie ── */}
+                <div
+                    style={{
+                        flexShrink: 0,
+                        fontFamily: "var(--font-geist-mono, monospace)",
+                        fontSize: 10,
+                        fontWeight: 500,
+                        letterSpacing: "0.10em",
+                        textTransform: "uppercase",
+                        color: "rgba(255,255,255,0.25)",
+                        padding: "4px 10px",
+                        border: "0.5px solid rgba(255,255,255,0.08)",
+                        display: "none",
+                    }}
+                    className="hidden md:block"
                 >
-                    {ctaLabel} →
-                </span>
+                    {category}
+                </div>
+
+                {/* ── Prix ── */}
+                <div style={{ flexShrink: 0, textAlign: "right" }}>
+                    <div
+                        style={{
+                            fontFamily: "var(--font-geist-mono, monospace)",
+                            fontSize: 22,
+                            fontWeight: 500,
+                            letterSpacing: "-0.03em",
+                            color: hovered ? accentColor : "rgba(255,255,255,0.80)",
+                            transition: "color 0.2s",
+                        }}
+                    >
+                        {price}
+                    </div>
+                    <div
+                        style={{
+                            fontFamily: "var(--font-geist-mono, monospace)",
+                            fontSize: 10,
+                            color: "rgba(255,255,255,0.22)",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        accès unique
+                    </div>
+                </div>
+
+                {/* ── CTA ── */}
+                <div
+                    style={{
+                        flexShrink: 0,
+                        padding: "10px 20px",
+                        fontFamily: "var(--font-syne, sans-serif)",
+                        fontWeight: 700,
+                        fontSize: 12,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: hovered ? "#000" : accentColor,
+                        background: hovered ? accentColor : "transparent",
+                        border: `1px solid rgba(${rgb}, ${hovered ? "1" : "0.40"})`,
+                        borderRadius: 0,
+                        boxShadow: hovered ? `2px 2px 0 rgba(${rgb}, 0.40)` : "none",
+                        transition: "all 0.15s ease",
+                        whiteSpace: "nowrap",
+                    }}
+                >
+                    {ctaLabel}
+                </div>
             </div>
         </a>
     );

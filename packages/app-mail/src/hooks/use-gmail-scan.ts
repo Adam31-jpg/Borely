@@ -87,26 +87,29 @@ export function useGmailScan() {
     }, [updateStats]);
 
     /**
-     * Simule la transition connecting → scanning.
-     * Crée le compte dans le store puis lance le scan.
+     * Lance la transition connecting → scanning.
+     * Crée le compte dans le store puis démarre le scan.
      *
-     * En production : cette fonction est appelée APRÈS le retour OAuth
-     * (le composant détecte la session NextAuth via useSession).
+     * En production : appelé après le retour OAuth.
+     * Si `email` et `displayLabel` sont fournis (depuis la session NextAuth réelle),
+     * ils sont utilisés directement. Sinon, des valeurs par défaut sont utilisées.
+     *
+     * @param email        - Email réel de l'utilisateur (session NextAuth)
+     * @param displayLabel - Nom affiché (session NextAuth user.name)
      */
-    const connect = useCallback(() => {
+    const connect = useCallback((email?: string, displayLabel?: string) => {
         setState("connecting");
 
-        // Création du compte dans le store (sera rempli depuis la session NextAuth)
         const accountId = generateAccountId();
         addAccount({
             id: accountId,
             provider: "gmail",
-            email: "perso@gmail.com",
-            displayLabel: "Perso",
+            email: email ?? "compte@gmail.com",
+            displayLabel: displayLabel ?? (email ? email.split("@")[0] ?? "Perso" : "Perso"),
             stats: { totalSenders: 0, totalMessages: 0, lastScanAt: null },
         });
 
-        // Délai simulant le retour OAuth + initialisation token
+        // Délai simulant l'initialisation du token après OAuth
         setTimeout(() => startScan(accountId), 800);
     }, [addAccount, startScan]);
 
