@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { signIn } from "next-auth/react";
 import { Plus, Mail, Shield, Zap, Sparkles, Loader2 } from "lucide-react";
 import { useGmailScan } from "./hooks/use-gmail-scan";
 import { SenderList } from "./components/sender-list";
@@ -54,7 +55,7 @@ export default function BoreBoxApp({ userEmail, userName }: BoreBoxAppProps) {
      */
     const handleConnectGoogle = useCallback(() => {
         setShowAddModal(false);
-        window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent("/workspace/mail")}`;
+        signIn("google", { callbackUrl: "/workspace/mail" });
     }, []);
 
     /**

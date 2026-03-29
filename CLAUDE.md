@@ -1,0 +1,230 @@
+# Borely — CLAUDE.md
+
+> **Lire ce fichier en priorité au début de chaque session Claude Code.**
+> Il évite de re-scanner le codebase entier à chaque démarrage.
+
+---
+
+## Présentation du projet
+
+**Borely** est un micro-SaaS en cours de construction : une suite d'apps productivité vendues à vie (lifetime deal), sans abonnement.
+
+- **BoreBox** (app-mail) : nettoyeur de boîte Gmail — détecte les newsletters et mailing-lists via l'en-tête `List-Unsubscribe`, propose le désabonnement en un clic + création de filtre Gmail automatique.
+- Architecture **app store** : les utilisateurs achètent des apps individuellement via Creem.io, accessibles depuis un hub central.
+- Design system : **Industrial Luxury / Retro-Futuristic** — Syne (headings 800), Geist Mono (body), glassmorphism, brutalist corners, hard shadows, pas de border-radius, tout en inline styles.
+
+---
+
+## Stack technique
+
+| Couche | Technologie |
+|--------|-------------|
+| Framework | Next.js 15 (App Router, Server + Client Components) |
+| Auth | **next-auth v4.24.11** — Google OAuth + JWT strategy |
+| Base de données | PostgreSQL via AWS RDS (`borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com`) |
+| ORM | Drizzle ORM + drizzle-kit |
+| State client | Zustand (accounts store dans app-mail) |
+| Monorepo | Turborepo + pnpm workspaces |
+| Styling | Inline styles uniquement (pas de Tailwind dans les apps) |
+| Paiement | Creem.io (pas encore implémenté) |
+| Chiffrement | AWS KMS (lazy, non configuré en dev) |
+
+---
+
+## Architecture monorepo
+
+```
+Borely/
+├── apps/
+│   └── hub/                        # Next.js 15 — app principale
+│       ├── app/
+│       │   ├── api/auth/[...nextauth]/route.ts   # → import handler from "@/lib/auth"
+│       │   ├── api/mail/scan/route.ts
+│       │   ├── api/mail/unsubscribe/route.ts
+│       │   ├── api/auth/register/route.ts
+│       │   ├── auth/signin/page.tsx               # page sign-in branded
+│       │   ├── auth/error/page.tsx                # page erreur auth
+│       │   ├── login/page.tsx
+│       │   ├── register/page.tsx
+│       │   ├── workspace/[appSlug]/page.tsx
+│       │   ├── store/[appSlug]/page.tsx
+│       │   ├── library/page.tsx
+│       │   └── settings/page.tsx
+│       ├── lib/auth.ts                            # ← CONFIG AUTH PRINCIPALE (next-auth v4)
+│       ├── middleware.ts                          # export { default } from "next-auth/middleware"
+│       └── types/next-auth.d.ts                  # session.accessToken typé
+│
+├── packages/
+│   ├── auth/                        # ⚠️ PLUS UTILISÉ — peut être supprimé
+│   ├── database/src/
+│   │   ├── schema/public.ts         # Tables Drizzle (user, account, session…)
+│   │   └── index.ts                 # db = drizzle(postgres(DATABASE_URL))
+│   ├── app-mail/src/
+│   │   ├── index.tsx               # BoreBoxApp — entry point
+│   │   ├── providers/gmail.ts      # GmailProvider (API réelle + MOCK fallback)
+│   │   ├── hooks/use-gmail-scan.ts # → POST /api/mail/scan
+│   │   └── components/             # ScanProgress, SenderList, UndoToast, …
+│   └── ui/                         # composants partagés (peu utilisés, inline styles préférés)
+│
+├── .env.local                       # ← SOURCE UNIQUE des variables d'env (racine)
+├── turbo.json                       # globalEnv liste toutes les vars
+└── CLAUDE.md                        # ce fichier
+```
+
+---
+
+## État actuel (29 mars 2026)
+
+### ✅ Fait et fonctionnel
+
+- Monorepo Turborepo + pnpm
+- Next.js 15 App Router (`apps/hub`)
+- **Auth : next-auth v4** (downgrade depuis v5 beta qui était buggée)
+- Google OAuth fonctionnel avec scopes Gmail (`gmail.readonly` + `gmail.modify`)
+- Session JWT avec `accessToken` Google stocké dans `session.accessToken`
+- RDS PostgreSQL connecté (`borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com`)
+- Tables DB créées : `user`, `account`, `session`, `verificationToken`, `purchases`, `apps_catalog`, `user_oauth_tokens`
+- UI `workspace/mail` s'affiche (BoreBox)
+- Auth config : `apps/hub/lib/auth.ts` (NextAuthOptions v4)
+- Route auth : `apps/hub/app/api/auth/[...nextauth]/route.ts`
+- Package app-mail : `packages/app-mail/src/`
+- `.env.local` racine chargé via `dotenv-cli` dans les scripts `dev` et `build`
+
+### 🚧 À faire ensuite
+
+- **BoreBox UI** : détecter `session.accessToken` et afficher l'interface de scan au lieu de "Connectez votre Gmail"
+- Brancher la Gmail API réelle dans `packages/app-mail/src/hooks/use-gmail-scan.ts`
+- Scanner les emails et afficher la liste des expéditeurs
+- Actions : supprimer / se désabonner
+- Système de paiement Creem.io
+- Page `store/mail` complète
+
+### ❌ Pas encore fait
+
+- Paiement Creem.io (webhook, vérification d'achat)
+- AWS KMS chiffrement tokens (placeholder en dev, tokens en clair dans JWT)
+- PWA (manifest, icons, service worker)
+- Deploy production (Vercel ou AWS)
+- Multi-compte email (Outlook V2)
+- Page `/library` — affichage des apps achetées depuis DB
+
+---
+
+## ⚠️ Points d'attention critiques
+
+### 1. next-auth est en v4 — NE PAS upgrader vers v5
+
+v5 beta (`5.0.0-beta.30`) causait `UnknownAction: Unsupported action` sur `GET /api/auth/signin/google` malgré toutes les tentatives de fix (basePath, AUTH_URL, AUTH_TRUST_HOST…). Downgrade vers v4.24.11 a résolu le problème.
+
+### 2. Config auth centralisée dans apps/hub/lib/auth.ts
+
+```
+apps/hub/lib/auth.ts          ← NextAuthOptions + export default NextAuth(authOptions)
+apps/hub/app/api/auth/[...nextauth]/route.ts  ← import handler from "@/lib/auth"
+apps/hub/middleware.ts        ← export { default } from "next-auth/middleware"
+```
+
+Pas de package `@borecore/auth` — tout est dans le hub.
+
+### 3. packages/auth/ existe encore mais n'est plus utilisé
+
+Peut être supprimé proprement avec `rm -rf packages/auth`.
+
+### 4. Variables d'environnement — chargement monorepo
+
+`.env.local` est à la **racine** du monorepo. Next.js tourne depuis `apps/hub/` et ne trouve pas ce fichier nativement. Fix : `dotenv-cli` dans les scripts npm :
+```json
+"dev": "dotenv -e ../../.env.local -- next dev --turbopack --port 3001",
+"build": "dotenv -e ../../.env.local -- next build"
+```
+
+### 5. Noms des tables DB (DrizzleAdapter defaults)
+
+`user`, `account`, `session`, `verificationToken` (singulier, pas pluriel). Migration `0001_rename_auth_tables.sql` a renommé les tables depuis le schéma initial en pluriel.
+
+### 6. Google OAuth app en mode Test
+
+Seul `adam.haouzi31@gmail.com` est testeur autorisé sur Google Cloud Console. Ajouter d'autres emails si besoin.
+
+### 7. Gmail API — flux du token
+
+```
+Google OAuth → jwt() callback → token.accessToken stocké dans JWT cookie
+                               ↓
+POST /api/mail/scan → getServerSession(authOptions) → session.accessToken
+                                                      ↓
+                                   Authorization: Bearer ${accessToken}
+                                   GET https://gmail.googleapis.com/gmail/v1/users/me/messages
+```
+
+Si `accessToken` absent → fallback vers `MOCK_SENDERS` (données simulées).
+
+---
+
+## Variables d'environnement requises
+
+Toutes dans `.env.local` à la **racine** du monorepo.
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL AWS RDS avec `?sslmode=require` |
+| `AUTH_SECRET` | Secret JWT next-auth (généré via `openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | URL base de l'app → `http://localhost:3001` |
+| `GOOGLE_CLIENT_ID` | Google Cloud Console OAuth 2.0 |
+| `GOOGLE_CLIENT_SECRET` | Google Cloud Console |
+| `AWS_REGION` | Région AWS KMS |
+| `AWS_ACCESS_KEY_ID` | Credentials AWS IAM |
+| `AWS_SECRET_ACCESS_KEY` | Credentials AWS IAM |
+| `AWS_KMS_KEY_ID` | ARN de la clé KMS |
+| `CREEM_API_KEY` | API Creem.io (à obtenir) |
+| `CREEM_WEBHOOK_SECRET` | Webhook Creem.io (à obtenir) |
+
+---
+
+## Commandes utiles
+
+```bash
+# Développement
+pnpm dev                          # démarre tous les apps (hub sur :3001)
+
+# Build
+pnpm turbo build                  # build + type check complet
+
+# Base de données (depuis packages/database/)
+DATABASE_URL="..." pnpm migrate   # applique les migrations SQL
+DATABASE_URL="..." pnpm generate  # génère une migration depuis le schéma
+DATABASE_URL="..." pnpm push      # push direct (interactif)
+DATABASE_URL="..." pnpm studio    # Drizzle Studio UI
+
+# Lint
+pnpm turbo lint
+
+# Nettoyage
+pnpm store prune
+rm -rf apps/hub/.next             # vider cache Next.js
+```
+
+---
+
+## Google Cloud Console — Configuration requise
+
+URI de redirection OAuth autorisées :
+```
+http://localhost:3001/api/auth/callback/google   (développement)
+https://<domaine>/api/auth/callback/google        (production)
+```
+
+Scopes activés :
+- `openid`, `email`, `profile`
+- `https://www.googleapis.com/auth/gmail.readonly`
+- `https://www.googleapis.com/auth/gmail.modify`
+
+---
+
+## Décisions d'architecture
+
+1. **Inline styles partout** dans les apps — pas de dépendance Tailwind dans les packages.
+2. **`ssr: false`** sur `BoreBoxApp` via `dynamic()` — évite les crashs Zustand en SSR.
+3. **KMS lazy** — aucun import AWS au démarrage, déclenché depuis `/api/mail/*` en production uniquement.
+4. **next-auth v4** (pas v5) — v5 beta trop instable pour le routing OAuth dans un monorepo Next.js 15.
+5. **Auth dans le hub uniquement** — `packages/auth/` abandonné, toute la config est dans `apps/hub/lib/auth.ts`.

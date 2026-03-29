@@ -1,2 +1,2 @@
-import { handlers } from "@borecore/auth";
-export const { GET, POST } = handlers;
+import handler from "@/lib/auth"
+export { handler as GET, handler as POST }

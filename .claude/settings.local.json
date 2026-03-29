@@ -21,7 +21,18 @@
       "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm push)",
       "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" printf '\\\\n\\\\n\\\\n\\\\n\\\\n\\\\n\\\\ny\\\\n')",
       "Bash(pnpm push:*)",
-      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm generate)"
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" pnpm generate)",
+      "Bash(DATABASE_URL=\"postgresql://postgres:borely-mdp@borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com:5432/postgres?sslmode=require\" node -e \":*)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm -name package.json -path */next-auth/package.json)",
+      "Bash(xargs -I{} node -e \"const p=require\\(''''{}''''\\); console.log\\(p.name+''''@''''+p.version\\)\")",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm -maxdepth 1 -name next-auth* -type d)",
+      "Bash(pnpm add:*)",
+      "Bash(npm view:*)",
+      "Bash(node -e \"console.log\\(require\\(''./apps/hub/node_modules/next-auth/package.json''\\).version\\)\")",
+      "Bash(xargs grep:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(find /c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm -maxdepth 1 -name dotenv@* -type d)",
+      "Bash(DOTENV=/c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm/dotenv@16.6.1/node_modules/dotenv/lib/main.js)"
     ]
   }
 }

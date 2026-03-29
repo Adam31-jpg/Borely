@@ -11,7 +11,9 @@
         "AWS_SECRET_ACCESS_KEY",
         "AWS_KMS_KEY_ID",
         "CREEM_API_KEY",
-        "CREEM_WEBHOOK_SECRET"
+        "CREEM_WEBHOOK_SECRET",
+        "AUTH_TRUST_HOST",
+        "NEXTAUTH_URL"
     ],
     "tasks": {
         "build": {
