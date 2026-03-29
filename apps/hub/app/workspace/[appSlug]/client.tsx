@@ -61,7 +61,7 @@ function AppLoadingSkeleton() {
  */
 const MailApp = dynamic(
     () => import("@borecore/app-mail").then(
-        (m) => m.default as ComponentType<{ userEmail?: string; userName?: string }>
+        (m) => m.BoreBoxApp as ComponentType<{ userEmail?: string; userName?: string }>
     ),
     {
         loading: () => <AppLoadingSkeleton />,

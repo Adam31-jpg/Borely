@@ -89,13 +89,22 @@ Borely/
 - Route auth : `apps/hub/app/api/auth/[...nextauth]/route.ts`
 - Package app-mail : `packages/app-mail/src/`
 - `.env.local` racine chargé via `dotenv-cli` dans les scripts `dev` et `build`
+- BoreBox UI : détection session.accessToken → affichage scanner si connecté
+- Gmail API réelle branchée dans /api/mail/scan (fallback mock si pas de token)
+- Composants ScanProgress + SenderList créés
+- `packages/ui`: Modal générique + ModalCheckbox (provider-agnostic, accentColor prop, ESC/overlay close, footer slot)
+- UnsubscribeModal BoreBox rewrite — wrapper fin autour du Modal générique
+- `scan_results` table en DB (`user_id`, `mailbox_email`, `senders` JSONB, `nextScanAt`)
+- Scan persisté en DB — refresh ne relance plus le scan, retourne le cache
+- Auto-rescan 14 jours avec countdown timer dans l'UI
+- Multi-mailbox max 3 (`MailboxSwitcher`) + limite affichée dans dropdown
+- UNSUB button fix — vrai `<button>` avec onClick
 
 ### 🚧 À faire ensuite
 
-- **BoreBox UI** : détecter `session.accessToken` et afficher l'interface de scan au lieu de "Connectez votre Gmail"
-- Brancher la Gmail API réelle dans `packages/app-mail/src/hooks/use-gmail-scan.ts`
-- Scanner les emails et afficher la liste des expéditeurs
-- Actions : supprimer / se désabonner
+- Suppression des emails en masse d'un expéditeur (DELETE /api/mail/delete)
+- UndoToast après désabonnement
+- Outlook provider
 - Système de paiement Creem.io
 - Page `store/mail` complète
 
@@ -105,7 +114,6 @@ Borely/
 - AWS KMS chiffrement tokens (placeholder en dev, tokens en clair dans JWT)
 - PWA (manifest, icons, service worker)
 - Deploy production (Vercel ou AWS)
-- Multi-compte email (Outlook V2)
 - Page `/library` — affichage des apps achetées depuis DB
 
 ---
@@ -126,7 +134,15 @@ apps/hub/middleware.ts        ← export { default } from "next-auth/middleware"
 
 Pas de package `@borecore/auth` — tout est dans le hub.
 
-### 3. packages/auth/ existe encore mais n'est plus utilisé
+### 3. Modal générique dans packages/ui
+
+Toujours utiliser `<Modal>` de `@borecore/ui` pour toute nouvelle modale. Ne jamais recréer une modale custom dans une app. Passer `accentColor` pour matcher le thème de l'app (BoreBox = `#00ffff`).
+
+### 4. Limite mailboxes
+
+`MAX_MAILBOXES = 3` dans `apps/hub/app/api/mail/mailboxes/route.ts`. Ne pas changer sans revoir le pricing Creem.io.
+
+### 5. packages/auth/ existe encore mais n'est plus utilisé
 
 Peut être supprimé proprement avec `rm -rf packages/auth`.
 

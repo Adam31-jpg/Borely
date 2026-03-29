@@ -1,156 +1,67 @@
-"use client";
-
 import { useState, useCallback } from "react";
-import type { ScannedSender, ScanState, CleaningAction } from "../types";
-import { boreboxConfig } from "../config";
-import { useAccountsStore, generateAccountId } from "../store/accounts";
 
-/**
- * Hook principal de BoreBox.
- *
- * Flux réel avec NextAuth :
- *   1. `connect()` → `signIn("google")` → OAuth Google → callback → /workspace/mail
- *   2. `startScan()` → `POST /api/mail/scan` avec l'accessToken de session
- *   3. Les résultats sont mis à jour dans useAccountsStore.updateStats()
- *
- * V1 : Le scan utilise encore les données simulées du GmailProvider
- *      (les appels Gmail API réels nécessitent le token d'une vraie session OAuth).
- *      Dès que GOOGLE_CLIENT_ID est configuré, tout est opérationnel.
- */
-export function useGmailScan() {
-    const [state, setState] = useState<ScanState>("idle");
-    const [senders, setSenders] = useState<ScannedSender[]>([]);
-    const [scanProgress, setScanProgress] = useState(0);
-    const [totalScanned, setTotalScanned] = useState(0);
-    const [cleaningAction, setCleaningAction] = useState<CleaningAction | null>(null);
-    const [error, setError] = useState<string | null>(null);
+export interface Sender {
+  email: string;
+  name: string;
+  count: number;
+  hasUnsubscribe: boolean;
+  listUnsubscribe?: string;
+  lastEmailDate?: string;
+  provider?: string;
+}
 
-    const { addAccount, updateStats } = useAccountsStore();
+interface UseGmailScanReturn {
+  scan: (mailboxEmail: string, forceRescan?: boolean) => Promise<void>;
+  isScanning: boolean;
+  senders: Sender[];
+  progress: number;
+  error: string | null;
+  nextScanAt: string | null;
+  scannedAt: string | null;
+}
 
-    /**
-     * Lance le scan via l'API route.
-     * Utilise l'accountId du compte actif pour récupérer le bon token en DB.
-     */
-    const startScan = useCallback(async (accountId: string) => {
-        setState("scanning");
-        setScanProgress(0);
-        setError(null);
+export function useGmailScan(): UseGmailScanReturn {
+  const [isScanning, setIsScanning] = useState(false);
+  const [senders, setSenders] = useState<Sender[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [nextScanAt, setNextScanAt] = useState<string | null>(null);
+  const [scannedAt, setScannedAt] = useState<string | null>(null);
 
-        try {
-            /* ── Animation de progression ── */
-            const progressInterval = setInterval(() => {
-                setScanProgress((prev) => {
-                    const next = prev + (100 - prev) * 0.12;
-                    return Math.min(next, 92); // S'arrête à 92% en attendant la vraie réponse
-                });
-            }, 200);
+  const scan = useCallback(async (mailboxEmail: string, forceRescan = false) => {
+    setIsScanning(true);
+    setError(null);
+    setProgress(0);
 
-            const res = await fetch("/api/mail/scan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    accountId,
-                    provider: "gmail",
-                    limit: boreboxConfig.maxScanEmails,
-                }),
-            });
+    try {
+      const progressInterval = setInterval(() => {
+        setProgress((p) => Math.min(p + 8, 85));
+      }, 400);
 
-            clearInterval(progressInterval);
+      const res = await fetch("/api/mail/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mailboxEmail, forceRescan }),
+      });
 
-            if (!res.ok) {
-                const err = await res.json() as { error?: string };
-                throw new Error(err.error ?? "Erreur de scan");
-            }
+      clearInterval(progressInterval);
+      setProgress(100);
 
-            const data = await res.json() as {
-                senders: ScannedSender[];
-                totalScanned: number;
-            };
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `Erreur serveur ${res.status}`);
+      }
 
-            setScanProgress(100);
-            setTotalScanned(data.totalScanned);
-            setSenders(data.senders);
+      const data = await res.json();
+      setSenders(data.senders ?? []);
+      setNextScanAt(data.nextScanAt ? new Date(data.nextScanAt).toISOString() : null);
+      setScannedAt(data.scannedAt ? new Date(data.scannedAt).toISOString() : null);
+    } catch (err: any) {
+      setError(err.message ?? "Erreur inconnue");
+    } finally {
+      setIsScanning(false);
+    }
+  }, []);
 
-            // Mise à jour temps réel des stats dans le store
-            updateStats(accountId, {
-                totalSenders: data.senders.length,
-                totalMessages: data.totalScanned,
-                lastScanAt: new Date().toISOString(),
-            });
-
-            setTimeout(() => setState("results"), 400);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Erreur inconnue";
-            setError(message);
-            setState("idle");
-        }
-    }, [updateStats]);
-
-    /**
-     * Lance la transition connecting → scanning.
-     * Crée le compte dans le store puis démarre le scan.
-     *
-     * En production : appelé après le retour OAuth.
-     * Si `email` et `displayLabel` sont fournis (depuis la session NextAuth réelle),
-     * ils sont utilisés directement. Sinon, des valeurs par défaut sont utilisées.
-     *
-     * @param email        - Email réel de l'utilisateur (session NextAuth)
-     * @param displayLabel - Nom affiché (session NextAuth user.name)
-     */
-    const connect = useCallback((email?: string, displayLabel?: string) => {
-        setState("connecting");
-
-        const accountId = generateAccountId();
-        addAccount({
-            id: accountId,
-            provider: "gmail",
-            email: email ?? "compte@gmail.com",
-            displayLabel: displayLabel ?? (email ? email.split("@")[0] ?? "Perso" : "Perso"),
-            stats: { totalSenders: 0, totalMessages: 0, lastScanAt: null },
-        });
-
-        // Délai simulant l'initialisation du token après OAuth
-        setTimeout(() => startScan(accountId), 800);
-    }, [addAccount, startScan]);
-
-    const toggleSender = useCallback((id: string) => {
-        setSenders((prev) =>
-            prev.map((s) => (s.id === id ? { ...s, selected: !s.selected } : s))
-        );
-    }, []);
-
-    const toggleAll = useCallback(() => {
-        setSenders((prev) => {
-            const allSelected = prev.every((s) => s.selected);
-            return prev.map((s) => ({ ...s, selected: !allSelected }));
-        });
-    }, []);
-
-    const clean = useCallback(() => {
-        const selectedIds = senders.filter((s) => s.selected).map((s) => s.id);
-        if (selectedIds.length === 0) return;
-        setState("cleaning");
-
-        const timerId = setTimeout(() => {
-            setSenders((prev) => prev.filter((s) => !selectedIds.includes(s.id)));
-            setCleaningAction(null);
-            setState("results");
-        }, boreboxConfig.undoDelayMs);
-
-        setCleaningAction({ senderIds: selectedIds, startedAt: Date.now(), timerId });
-    }, [senders]);
-
-    const undoClean = useCallback(() => {
-        if (cleaningAction?.timerId) clearTimeout(cleaningAction.timerId);
-        setCleaningAction(null);
-        setState("results");
-    }, [cleaningAction]);
-
-    const selectedCount = senders.filter((s) => s.selected).length;
-
-    return {
-        state, senders, scanProgress, totalScanned,
-        cleaningAction, selectedCount, error,
-        connect, toggleSender, toggleAll, clean, undoClean,
-    };
+  return { scan, isScanning, senders, progress, error, nextScanAt, scannedAt };
 }

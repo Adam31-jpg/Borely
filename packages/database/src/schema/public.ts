@@ -5,6 +5,9 @@ import {
     boolean,
     integer,
     primaryKey,
+    uuid,
+    jsonb,
+    unique,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -98,6 +101,24 @@ export const purchases = pgTable("purchases", {
     purchasedAt:  timestamp("purchased_at", { withTimezone: true }).defaultNow().notNull(),
     creemOrderId: text("creem_order_id"),
 });
+
+// ─── Métier — Résultats de scan BoreBox ───────────────────────────────────
+
+export const scanResults = pgTable(
+    "scan_results",
+    {
+        id:           uuid("id").defaultRandom().primaryKey(),
+        userId:       text("user_id").notNull(),
+        mailboxEmail: text("mailbox_email").notNull(),
+        scannedAt:    timestamp("scanned_at").defaultNow().notNull(),
+        nextScanAt:   timestamp("next_scan_at").notNull(),
+        totalScanned: integer("total_scanned").notNull().default(0),
+        senders:      jsonb("senders").notNull().default([]),
+    },
+    (table) => [
+        unique().on(table.userId, table.mailboxEmail),
+    ],
+);
 
 // ─── Métier — Tokens OAuth chiffrés (KMS) ─────────────────────────────────
 

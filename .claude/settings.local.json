@@ -32,7 +32,12 @@
       "Bash(xargs grep:*)",
       "Bash(pnpm remove:*)",
       "Bash(find /c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm -maxdepth 1 -name dotenv@* -type d)",
-      "Bash(DOTENV=/c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm/dotenv@16.6.1/node_modules/dotenv/lib/main.js)"
+      "Bash(DOTENV=/c/Users/adamh/Documents/Projects/Borely/node_modules/.pnpm/dotenv@16.6.1/node_modules/dotenv/lib/main.js)",
+      "Bash(npx tsc:*)",
+      "Bash(dotenv -e ../../.env.local -- pnpm generate)",
+      "Bash(node -e \"require\\(''dotenv''\\).config\\({path:''../../.env.local''}\\); console.log\\(''DB:'', process.env.DATABASE_URL?.slice\\(0,30\\)\\)\")",
+      "Bash(npx --yes dotenv-cli -e ../../.env.local -- pnpm generate)",
+      "Bash(npx --yes dotenv-cli -e ../../.env.local -- pnpm migrate)"
     ]
   }
 }
