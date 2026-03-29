@@ -102,6 +102,7 @@ Borely/
 
 ### 🚧 À faire ensuite
 
+- Multi-mailbox réel : créer table `user_mailboxes`, lier comptes OAuth secondaires au user principal
 - Suppression des emails en masse d'un expéditeur (DELETE /api/mail/delete)
 - UndoToast après désabonnement
 - Outlook provider
@@ -154,7 +155,15 @@ Peut être supprimé proprement avec `rm -rf packages/auth`.
 "build": "dotenv -e ../../.env.local -- next build"
 ```
 
-### 5. Noms des tables DB (DrizzleAdapter defaults)
+### 5. Multi-mailbox
+
+Counter fix appliqué (join `user` table pour avoir le vrai email au lieu de `providerAccountId` numérique Google). Le flow d'ajout de compte est marqué "coming soon" — nécessite table `user_mailboxes` + OAuth account linking avant d'implémenter.
+
+### 6. Scan Gmail
+
+Scan 1000 emails sans filtre `q=` (plus large), filtre côté serveur sur `hasUnsubscribe || count >= 2`. Cache 14 jours vérifié avant tout appel Gmail — log `[scan] returning cached result` vs `[scan] running fresh scan`.
+
+### 7. Noms des tables DB (DrizzleAdapter defaults)
 
 `user`, `account`, `session`, `verificationToken` (singulier, pas pluriel). Migration `0001_rename_auth_tables.sql` a renommé les tables depuis le schéma initial en pluriel.
 

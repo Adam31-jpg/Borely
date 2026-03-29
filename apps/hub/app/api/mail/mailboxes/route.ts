@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@borecore/database";
-import { accounts, scanResults } from "@borecore/database/schema";
+import { accounts, users, scanResults } from "@borecore/database/schema";
 import { eq } from "drizzle-orm";
 
 const MAX_MAILBOXES = 3;
@@ -15,10 +15,11 @@ export async function GET(_req: NextRequest) {
 
   const userAccounts = await db
     .select({
-      email: accounts.providerAccountId,
+      email: users.email,
       provider: accounts.provider,
     })
     .from(accounts)
+    .innerJoin(users, eq(accounts.userId, users.id))
     .where(eq(accounts.userId, session.user.id));
 
   const scans = await db

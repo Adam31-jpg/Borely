@@ -1,5 +1,6 @@
 "use client";
 
+// TODO: multi-mailbox requires user_mailboxes table + OAuth account linking before implementing
 import { useState, useEffect } from "react";
 import { useCountdown } from "../hooks/use-countdown";
 
@@ -60,6 +61,7 @@ export function MailboxSwitcher({ currentEmail, onSwitch }: Props) {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [canAddMore, setCanAddMore] = useState(false);
   const [max, setMax] = useState(3);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     fetch("/api/mail/mailboxes")
@@ -116,21 +118,37 @@ export function MailboxSwitcher({ currentEmail, onSwitch }: Props) {
           ))}
 
           {canAddMore ? (
-            <a
-              href="/api/auth/signin/google"
-              style={{
-                display: "block",
-                padding: "0.75rem 1rem",
-                color: "#00ffff",
-                fontFamily: "'Geist Mono', monospace",
-                fontSize: "0.75rem",
-                textDecoration: "none",
-                borderTop: "1px solid #1a1a1a",
-                letterSpacing: "0.05em",
-              }}
-            >
-              + AJOUTER UNE BOÎTE ({mailboxes.length}/{max})
-            </a>
+            <div style={{ borderTop: "1px solid #1a1a1a" }}>
+              <button
+                onClick={() => setShowComingSoon((v) => !v)}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "0.75rem 1rem",
+                  color: "#00ffff",
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: "0.75rem",
+                  letterSpacing: "0.05em",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                + AJOUTER UNE BOÎTE ({mailboxes.length}/{max})
+              </button>
+              {showComingSoon && (
+                <div style={{
+                  padding: "0.5rem 1rem 0.75rem",
+                  color: "#555",
+                  fontFamily: "'Geist Mono', monospace",
+                  fontSize: "0.7rem",
+                  lineHeight: 1.5,
+                }}>
+                  Fonctionnalité multi-boîtes disponible prochainement.
+                </div>
+              )}
+            </div>
           ) : (
             <div
               style={{

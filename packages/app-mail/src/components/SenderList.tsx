@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Sender } from "../hooks/use-gmail-scan";
 import { useCountdown } from "../hooks/use-countdown";
+import { UnsubscribeModal } from "./UnsubscribeModal";
 
 interface Props {
   senders: Sender[];
@@ -11,6 +13,7 @@ interface Props {
 
 export function SenderList({ senders, nextScanAt, onUnsubscribe }: Props) {
   const countdown = useCountdown(nextScanAt);
+  const [modalSenders, setModalSenders] = useState<Sender[] | null>(null);
 
   return (
     <div style={{ width: "100%", maxWidth: "900px" }}>
@@ -30,6 +33,18 @@ export function SenderList({ senders, nextScanAt, onUnsubscribe }: Props) {
           </span>
         )}
       </div>
+
+      {/* Unsubscribe modal */}
+      {modalSenders && (
+        <UnsubscribeModal
+          senders={modalSenders}
+          onConfirm={() => {
+            if (modalSenders[0]) onUnsubscribe?.(modalSenders[0]);
+            setModalSenders(null);
+          }}
+          onCancel={() => setModalSenders(null)}
+        />
+      )}
 
       {/* Sender rows */}
       {senders.map((s) => (
@@ -51,7 +66,7 @@ export function SenderList({ senders, nextScanAt, onUnsubscribe }: Props) {
             <span style={{ color: "#555", fontSize: "0.75rem" }}>{s.count} emails</span>
             {s.hasUnsubscribe && (
               <button
-                onClick={() => onUnsubscribe?.(s)}
+                onClick={() => setModalSenders([s])}
                 style={{
                   background: "#00ffff22",
                   color: "#00ffff",

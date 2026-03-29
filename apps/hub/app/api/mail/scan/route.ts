@@ -20,7 +20,6 @@ async function fetchMessageIds(accessToken: string, limit: number): Promise<stri
   while (ids.length < limit) {
     const params = new URLSearchParams({
       maxResults: String(Math.min(500, limit - ids.length)),
-      q: "List-Unsubscribe",
     });
     if (pageToken) params.set("pageToken", pageToken);
 
@@ -90,6 +89,7 @@ export async function POST(req: NextRequest) {
     if (existing.length > 0) {
       const cached = existing[0]!;
       if (cached.nextScanAt > new Date()) {
+        console.log("[scan] returning cached result for", email);
         return NextResponse.json({
           senders: cached.senders,
           totalScanned: cached.totalScanned,
@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
       }
     }
   }
+
+  console.log("[scan] running fresh scan for", email);
 
   // 2. No valid cache — mock fallback if no token
   if (!accessToken) {
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
   // 3. Full Gmail scan
   try {
     const ids = await fetchMessageIds(accessToken, 1000);
-    const messages = await fetchMetadataBatch(accessToken, ids.slice(0, 200));
+    const messages = await fetchMetadataBatch(accessToken, ids);
 
     const senderMap = new Map<string, { name: string; count: number; listUnsubscribe?: string; lastEmailDate?: string }>();
 
@@ -152,6 +154,7 @@ export async function POST(req: NextRequest) {
         lastEmailDate: data.lastEmailDate,
         provider: "gmail" as const,
       }))
+      .filter((s) => s.hasUnsubscribe || s.count >= 2)
       .sort((a, b) => b.count - a.count);
 
     const now = new Date();
