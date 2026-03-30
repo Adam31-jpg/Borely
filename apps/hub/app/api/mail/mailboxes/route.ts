@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@borecore/database";
-import { accounts, users, scanResults } from "@borecore/database/schema";
+import { accounts, users, scanResults, userMailboxes } from "@borecore/database/schema";
 import { eq } from "drizzle-orm";
 
 const MAX_MAILBOXES = 3;
@@ -13,6 +13,7 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
+  // Primary mailbox from OAuth account
   const userAccounts = await db
     .select({
       email: users.email,
@@ -21,6 +22,21 @@ export async function GET(_req: NextRequest) {
     .from(accounts)
     .innerJoin(users, eq(accounts.userId, users.id))
     .where(eq(accounts.userId, session.user.id));
+
+  // Extra mailboxes added via /api/mail/connect
+  const extraMailboxes = await db
+    .select({ email: userMailboxes.email, provider: userMailboxes.provider })
+    .from(userMailboxes)
+    .where(eq(userMailboxes.primaryUserId, session.user.id));
+
+  // Merge, deduplicate by email
+  const allEmails: { email: string; provider: string }[] = [
+    ...userAccounts.map((a) => ({ email: a.email ?? "", provider: a.provider })),
+    ...extraMailboxes,
+  ];
+  const unique = Array.from(new Map(allEmails.map((m) => [m.email, m])).values()).filter(
+    (m) => m.email
+  );
 
   const scans = await db
     .select({
@@ -34,7 +50,7 @@ export async function GET(_req: NextRequest) {
 
   const scanMap = new Map(scans.map((s) => [s.mailboxEmail, s]));
 
-  const mailboxes = userAccounts.map((a) => ({
+  const mailboxes = unique.map((a) => ({
     email: a.email,
     provider: a.provider,
     scan: scanMap.get(a.email) ?? null,

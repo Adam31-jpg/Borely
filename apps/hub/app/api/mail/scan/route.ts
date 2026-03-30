@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
 
   // 3. Full Gmail scan
   try {
-    const ids = await fetchMessageIds(accessToken, 1000);
+    const ids = await fetchMessageIds(accessToken, 500);
     const messages = await fetchMetadataBatch(accessToken, ids);
 
     const senderMap = new Map<string, { name: string; count: number; listUnsubscribe?: string; lastEmailDate?: string }>();

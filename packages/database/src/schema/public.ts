@@ -120,6 +120,43 @@ export const scanResults = pgTable(
     ],
 );
 
+// ─── Métier — Boîtes mail secondaires ─────────────────────────────────────
+
+export const userMailboxes = pgTable(
+    "user_mailboxes",
+    {
+        id:            uuid("id").defaultRandom().primaryKey(),
+        primaryUserId: text("primary_user_id").notNull(),
+        email:         text("email").notNull(),
+        provider:      text("provider").notNull().default("gmail"),
+        accessToken:   text("access_token"),
+        refreshToken:  text("refresh_token"),
+        expiresAt:     timestamp("expires_at"),
+        addedAt:       timestamp("added_at").defaultNow().notNull(),
+    },
+    (table) => [
+        unique().on(table.primaryUserId, table.email),
+    ],
+);
+
+// ─── Métier — Historique des désabonnements ───────────────────────────────
+
+export const unsubscribeHistory = pgTable(
+    "unsubscribe_history",
+    {
+        id:             uuid("id").defaultRandom().primaryKey(),
+        userId:         text("user_id").notNull(),        // no FK — JWT strategy keeps user table empty
+        mailboxEmail:   text("mailbox_email").notNull(),
+        senderEmail:    text("sender_email").notNull(),
+        senderName:     text("sender_name").notNull(),
+        unsubscribedAt: timestamp("unsubscribed_at").defaultNow().notNull(),
+        method:         text("method").notNull().default("http"), // "http" | "mailto" | "manual"
+    },
+    (table) => [
+        unique().on(table.userId, table.mailboxEmail, table.senderEmail),
+    ],
+);
+
 // ─── Métier — Tokens OAuth chiffrés (KMS) ─────────────────────────────────
 
 export const userOAuthTokens = pgTable("user_oauth_tokens", {

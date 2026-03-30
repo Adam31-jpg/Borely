@@ -1,6 +1,5 @@
 "use client";
 
-// TODO: multi-mailbox requires user_mailboxes table + OAuth account linking before implementing
 import { useState, useEffect } from "react";
 import { useCountdown } from "../hooks/use-countdown";
 
@@ -61,7 +60,6 @@ export function MailboxSwitcher({ currentEmail, onSwitch }: Props) {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [canAddMore, setCanAddMore] = useState(false);
   const [max, setMax] = useState(3);
-  const [showComingSoon, setShowComingSoon] = useState(false);
 
   useEffect(() => {
     fetch("/api/mail/mailboxes")
@@ -119,8 +117,8 @@ export function MailboxSwitcher({ currentEmail, onSwitch }: Props) {
 
           {canAddMore ? (
             <div style={{ borderTop: "1px solid #1a1a1a" }}>
-              <button
-                onClick={() => setShowComingSoon((v) => !v)}
+              <a
+                href="/api/mail/connect"
                 style={{
                   display: "block",
                   width: "100%",
@@ -131,23 +129,11 @@ export function MailboxSwitcher({ currentEmail, onSwitch }: Props) {
                   fontSize: "0.75rem",
                   letterSpacing: "0.05em",
                   background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
+                  textDecoration: "none",
                 }}
               >
                 + AJOUTER UNE BOÎTE ({mailboxes.length}/{max})
-              </button>
-              {showComingSoon && (
-                <div style={{
-                  padding: "0.5rem 1rem 0.75rem",
-                  color: "#555",
-                  fontFamily: "'Geist Mono', monospace",
-                  fontSize: "0.7rem",
-                  lineHeight: 1.5,
-                }}>
-                  Fonctionnalité multi-boîtes disponible prochainement.
-                </div>
-              )}
+              </a>
             </div>
           ) : (
             <div

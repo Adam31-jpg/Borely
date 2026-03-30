@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -7,9 +8,9 @@ function SignInContent() {
     const params = useSearchParams();
     const callbackUrl = params.get("callbackUrl") ?? "/";
 
-    const handleGoogleSignIn = () => {
-        window.location.href = `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`;
-    };
+    async function handleGoogle() {
+        await signIn("google", { callbackUrl });
+    }
 
     return (
         <div
@@ -130,7 +131,7 @@ function SignInContent() {
 
                 {/* Bouton Google */}
                 <button
-                    onClick={handleGoogleSignIn}
+                    onClick={handleGoogle}
                     style={{
                         width: "100%",
                         display: "flex",

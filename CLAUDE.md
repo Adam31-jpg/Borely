@@ -73,7 +73,7 @@ Borely/
 
 ---
 
-## État actuel (29 mars 2026)
+## État actuel (30 mars 2026)
 
 ### ✅ Fait et fonctionnel
 
@@ -83,7 +83,7 @@ Borely/
 - Google OAuth fonctionnel avec scopes Gmail (`gmail.readonly` + `gmail.modify`)
 - Session JWT avec `accessToken` Google stocké dans `session.accessToken`
 - RDS PostgreSQL connecté (`borely-db.cev6mgksovif.us-east-1.rds.amazonaws.com`)
-- Tables DB créées : `user`, `account`, `session`, `verificationToken`, `purchases`, `apps_catalog`, `user_oauth_tokens`
+- Tables DB créées : `user`, `account`, `session`, `verificationToken`, `purchases`, `apps_catalog`, `user_oauth_tokens`, `scan_results`, `user_mailboxes`, `unsubscribe_history`
 - UI `workspace/mail` s'affiche (BoreBox)
 - Auth config : `apps/hub/lib/auth.ts` (NextAuthOptions v4)
 - Route auth : `apps/hub/app/api/auth/[...nextauth]/route.ts`
@@ -91,18 +91,25 @@ Borely/
 - `.env.local` racine chargé via `dotenv-cli` dans les scripts `dev` et `build`
 - BoreBox UI : détection session.accessToken → affichage scanner si connecté
 - Gmail API réelle branchée dans /api/mail/scan (fallback mock si pas de token)
+- Scan 500 emails sans filtre `q=` (côté serveur : `hasUnsubscribe || count >= 2`)
 - Composants ScanProgress + SenderList créés
 - `packages/ui`: Modal générique + ModalCheckbox (provider-agnostic, accentColor prop, ESC/overlay close, footer slot)
 - UnsubscribeModal BoreBox rewrite — wrapper fin autour du Modal générique
-- `scan_results` table en DB (`user_id`, `mailbox_email`, `senders` JSONB, `nextScanAt`)
-- Scan persisté en DB — refresh ne relance plus le scan, retourne le cache
+- `scan_results` table en DB — cache 14 jours, refresh ne relance pas le scan
 - Auto-rescan 14 jours avec countdown timer dans l'UI
-- Multi-mailbox max 3 (`MailboxSwitcher`) + limite affichée dans dropdown
-- UNSUB button fix — vrai `<button>` avec onClick
+- Multi-mailbox max 3 (`MailboxSwitcher`) + table `user_mailboxes` + OAuth flow `/api/mail/connect`
+- Filtre par défaut "NEWSLETTERS" (hasUnsubscribe only) — bouton "TOUS" pour voir tout
+- Pagination 20 items par page avec contrôles ← PRÉC / SUIV →
+- Tri par fréquence ou nom — recherche texte libre
+- Tout en français (UI entièrement traduite)
+- Historique désabonnements : table `unsubscribe_history` + GET `/api/mail/history` + composant `UnsubscribeHistory` collapsible
+- Désabonnement sauvegardé en DB (userId, mailboxEmail, senderName, method)
+- Mobile responsive : `flexWrap`, `className` CSS (`borebox-row`, `borebox-header`, etc.) + `<style>` media query dans BoreBoxApp
 
 ### 🚧 À faire ensuite
 
-- Multi-mailbox réel : créer table `user_mailboxes`, lier comptes OAuth secondaires au user principal
+- Multi-mailbox : chiffrement tokens OAuth secondaires (AWS KMS)
+- Multi-mailbox : refresh token automatique pour les boîtes secondaires
 - Suppression des emails en masse d'un expéditeur (DELETE /api/mail/delete)
 - UndoToast après désabonnement
 - Outlook provider
@@ -157,11 +164,20 @@ Peut être supprimé proprement avec `rm -rf packages/auth`.
 
 ### 5. Multi-mailbox
 
-Counter fix appliqué (join `user` table pour avoir le vrai email au lieu de `providerAccountId` numérique Google). Le flow d'ajout de compte est marqué "coming soon" — nécessite table `user_mailboxes` + OAuth account linking avant d'implémenter.
+Table `user_mailboxes` créée. Flow complet : `GET /api/mail/connect` → Google OAuth → `/api/mail/connect/callback` → upsert dans `user_mailboxes`. Le bouton "+ AJOUTER UNE BOÎTE" dans `MailboxSwitcher` pointe vers `/api/mail/connect`. ⚠️ Tokens stockés en clair — KMS non implémenté en dev.
 
 ### 6. Scan Gmail
 
-Scan 1000 emails sans filtre `q=` (plus large), filtre côté serveur sur `hasUnsubscribe || count >= 2`. Cache 14 jours vérifié avant tout appel Gmail — log `[scan] returning cached result` vs `[scan] running fresh scan`.
+Scan 500 emails sans filtre `q=` (plus large), filtre côté serveur sur `hasUnsubscribe || count >= 2`. Cache 14 jours vérifié avant tout appel Gmail — log `[scan] returning cached result` vs `[scan] running fresh scan`.
+
+### 8. Google OAuth multi-mailbox — URI de redirection supplémentaire
+
+`/api/mail/connect` redirige vers Google OAuth avec `redirect_uri=/api/mail/connect/callback`. Ajouter dans Google Cloud Console → Credentials → OAuth Client → **Authorized redirect URIs** :
+```
+http://localhost:3001/api/mail/connect/callback   (dev)
+https://yourdomain.com/api/mail/connect/callback  (prod)
+```
+Sans ça : erreur `redirect_uri_mismatch`.
 
 ### 7. Noms des tables DB (DrizzleAdapter defaults)
 

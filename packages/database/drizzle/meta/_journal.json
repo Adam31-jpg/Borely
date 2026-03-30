@@ -29,6 +29,20 @@
       "when": 1774900001000,
       "tag": "0003_drop_scan_results_fk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1774900002000,
+      "tag": "0004_user_mailboxes",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1774900003000,
+      "tag": "0005_unsubscribe_history",
+      "breakpoints": true
     }
   ]
 }

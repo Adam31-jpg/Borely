@@ -5,6 +5,7 @@ import { useGmailScan } from "./hooks/use-gmail-scan";
 import { ScanProgress } from "./components/ScanProgress";
 import { SenderList } from "./components/SenderList";
 import { MailboxSwitcher } from "./components/MailboxSwitcher";
+import { UnsubscribeHistory } from "./components/UnsubscribeHistory";
 import type { Sender } from "./hooks/use-gmail-scan";
 
 interface BoreBoxAppProps {
@@ -26,7 +27,6 @@ export function BoreBoxApp({ userEmail, accessToken }: BoreBoxAppProps) {
   }, [currentMailbox, isConnected]);
 
   const handleUnsubscribe = (sender: Sender) => {
-    // TODO: POST /api/mail/unsubscribe
     console.log("[BoreBox] unsubscribe:", sender.email);
   };
 
@@ -49,8 +49,38 @@ export function BoreBoxApp({ userEmail, accessToken }: BoreBoxAppProps) {
 
   return (
     <div style={styles.container}>
+      {/* Global mobile CSS */}
+      <style>{`
+        @media (max-width: 640px) {
+          .borebox-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+          }
+          .borebox-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+          }
+          .borebox-row-right {
+            width: 100%;
+            justify-content: space-between !important;
+          }
+          .borebox-toolbar {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+          .borebox-search {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+          }
+          .borebox-stats {
+            gap: 0.5rem !important;
+          }
+        }
+      `}</style>
+
       {/* Header */}
-      <div style={styles.header}>
+      <div className="borebox-header" style={styles.header}>
         <h1 style={styles.appTitle}>BOREBOX</h1>
         <MailboxSwitcher currentEmail={currentMailbox} onSwitch={setCurrentMailbox} />
       </div>
@@ -76,6 +106,11 @@ export function BoreBoxApp({ userEmail, accessToken }: BoreBoxAppProps) {
       {!isScanning && !error && senders.length === 0 && (
         <p style={styles.empty}>Aucune newsletter détectée dans cette boîte.</p>
       )}
+
+      {/* Unsubscribe history */}
+      {!isScanning && (
+        <UnsubscribeHistory />
+      )}
     </div>
   );
 }
@@ -95,8 +130,10 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: "900px",
     display: "flex",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: "0.75rem",
     borderBottom: "1px solid #00ffff33",
     paddingBottom: "1rem",
     marginBottom: "2rem",
